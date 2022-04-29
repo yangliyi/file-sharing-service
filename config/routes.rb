@@ -4,5 +4,11 @@ Rails.application.routes.draw do
 
   namespace :api do
     post 'login' => 'authentication#login'
+    
+    resources :uploaded_files, only: [:create, :index] do
+      post :share_link, on: :member
+    end
+
   end
+  get 'share_links/:hex' => 'share_links#show'
 end
