@@ -8,10 +8,9 @@ class ShareLinkService
     'development' => '0.0.0.0:3000'
   }.freeze
 
-  DEFAULT_EXPIRE_TIME_IN_SECONDS = 604800 # 7 days by default
+  DEFAULT_EXPIRE_TIME_IN_SECONDS = 600
   PRESIGNED_URL_MAX_EXPIRES_IN = 7.days
 
-  # TODO use put if not exists
   def generate_url(uploaded_file, expire_time: DEFAULT_EXPIRE_TIME_IN_SECONDS)
     bucket_object_key = uploaded_file.file.key
     hex = SecureRandom.hex
@@ -21,10 +20,14 @@ class ShareLinkService
         share_link: hex,
         bucket_object_key: bucket_object_key,
         expire_time: Time.now.to_i + expire_time
-      }
+      },
+      condition_expression: 'attribute_not_exists(share_link)'
     })
 
     generate_url_by_hex(hex)
+  rescue Aws::DynamoDB::Errors::ConditionalCheckFailedException => e
+    Rails.logger.info(e)
+    raise GenerateLinkError
   end
 
   # TODO use cache
@@ -68,4 +71,6 @@ class ShareLinkService
       Time.at(expire_time).to_i - Time.now.to_i
     end
   end
+
+  class GenerateLinkError < StandardError; end
 end

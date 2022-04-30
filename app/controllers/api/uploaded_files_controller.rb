@@ -21,6 +21,8 @@ class Api::UploadedFilesController < ApplicationController
     return render json: { message: 'file not found' }, status: 404 unless uploaded_file.present?
 
     render json: { share_link: ShareLinkService.new.generate_url(uploaded_file) }
+  rescue ShareLinkService::GenerateLinkError
+    render json: { message: 'failed to generate share link' }, status: 400
   end
 
   private

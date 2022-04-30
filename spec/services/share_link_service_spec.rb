@@ -19,11 +19,32 @@ RSpec.describe ShareLinkService do
           share_link: mock_hex,
           bucket_object_key: mock_bucket_key,
           expire_time: anything
-        }
+        },
+        condition_expression: 'attribute_not_exists(share_link)'
       })
 
       result = ShareLinkService.new.generate_url(uplaoded_file, expire_time: expire_time)
       expect(result).to eq("#{ShareLinkService::URL_HOST[Rails.env]}/share_links/#{mock_hex}")
+    end
+
+    it 'raises error when share link hex exists' do
+      uplaoded_file.stub(:file).and_return(file)
+      file.stub(:key).and_return(mock_bucket_key)
+      allow(SecureRandom).to receive(:hex).and_return(mock_hex)
+      allow_any_instance_of(Aws::DynamoDB::Client).to receive(:put_item).and_raise(
+        Aws::DynamoDB::Errors::ConditionalCheckFailedException.new(Seahorse::Client::RequestContext.new, '')
+      )
+      expect_any_instance_of(Aws::DynamoDB::Client).to receive(:put_item).with({
+        table_name: ShareLinkService::SHARE_LINK_TABLE,
+        item: {
+          share_link: mock_hex,
+          bucket_object_key: mock_bucket_key,
+          expire_time: anything
+        },
+        condition_expression: 'attribute_not_exists(share_link)'
+      })
+
+      expect{ ShareLinkService.new.generate_url(uplaoded_file, expire_time: expire_time)}.to raise_error(ShareLinkService::GenerateLinkError)
     end
   end
 
