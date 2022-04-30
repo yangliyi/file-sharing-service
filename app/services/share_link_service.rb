@@ -1,14 +1,18 @@
 class ShareLinkService
   SHARE_LINK_TABLE = 'share_links'.freeze
+  PRIMARY_KEY = 'share_link'.freeze
   REGION = 'us-east-1'
   S3_BUCKET_PREFIX = 'file-sharing-service-'.freeze
   URL_HOST = {
-    'test' => 'htttp:',
+    'test' => 'htttp://mock_host.com',
     'development' => '0.0.0.0:3000'
   }.freeze
+
+  DEFAULT_EXPIRE_TIME_IN_SECONDS = 604800 # 7 days by default
   PRESIGNED_URL_MAX_EXPIRES_IN = 7.days
 
-  def generate_url(uploaded_file, expire_time: 604800)
+  # TODO use put if not exists
+  def generate_url(uploaded_file, expire_time: DEFAULT_EXPIRE_TIME_IN_SECONDS)
     bucket_object_key = uploaded_file.file.key
     hex = SecureRandom.hex
     dynamo_client.put_item({
@@ -23,10 +27,11 @@ class ShareLinkService
     generate_url_by_hex(hex)
   end
 
+  # TODO use cache
   def get_presigned_url(hex)
     resp = dynamo_client.get_item({
       key: {
-        'share_link' => hex
+        PRIMARY_KEY => hex
       },
       table_name: SHARE_LINK_TABLE
     })

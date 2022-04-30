@@ -15,6 +15,7 @@ class Api::UploadedFilesController < ApplicationController
     render json: { uploaded_files: uploaded_files.includes(file_attachment: :blob).map { |f| { id: f.id, file_url: f.file.url }}}
   end
 
+  # TODO use uuid for file
   def share_link
     uploaded_file = current_user.uploaded_files.find_by(id: params[:id])
     return render json: { message: 'file not found' }, status: 404 unless uploaded_file.present?
