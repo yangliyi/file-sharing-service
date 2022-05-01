@@ -1,24 +1,28 @@
 # README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
-
-Things you may want to cover:
-
-* Ruby version
-
 * System dependencies
+
+`docker-compose run api bundle`
 
 * Configuration
 
-* Database creation
+`$AWS_ACCESS_KEY_ID` and `$AWS_SECRET_ACCESS_KEY` needs to be set up for AWS services
 
-* Database initialization
+create a Dynamodb table `share_links`
+
+create a S3 bucket `file-sharing-service-dev`
+
+* Database creation / Database initialization
+
+`docker-compose run api rails db:create db:migrate`
+
+`docker-compose run -e "RAILS_ENV=test" api rails db:create db:migrate`
 
 * How to run the test suite
 
-* Services (job queues, cache servers, search engines, etc.)
+`docker-compose run api rspec`
 
-* Deployment instructions
+* How to get the application up and running locally
+`docker-compose up -d`
 
 * ...
