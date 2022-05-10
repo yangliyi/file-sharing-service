@@ -2,11 +2,6 @@ class ShareLinkService
   SHARE_LINK_TABLE = 'share_links'.freeze
   PRIMARY_KEY = 'share_link'.freeze
   REGION = 'us-east-1'
-  S3_BUCKET_PREFIX = 'file-sharing-service-'.freeze
-  URL_HOST = {
-    'test' => 'htttp://mock_host.com',
-    'development' => '0.0.0.0:3000'
-  }.freeze
 
   DEFAULT_EXPIRE_TIME_IN_SECONDS = 600
   PRESIGNED_URL_MAX_EXPIRES_IN = 7.days
@@ -21,7 +16,7 @@ class ShareLinkService
         bucket_object_key: bucket_object_key,
         expire_time: Time.now.to_i + expire_time
       },
-      condition_expression: 'attribute_not_exists(share_link)'
+      condition_expression: "attribute_not_exists(#{PRIMARY_KEY})"
     })
 
     generate_url_by_hex(hex)
@@ -46,7 +41,7 @@ class ShareLinkService
       )
 
       signer = Aws::S3::Presigner.new(client: s3_client)
-      signer.presigned_url(:get_object, bucket: "#{S3_BUCKET_PREFIX}#{Rails.env}", key: resp.item['bucket_object_key'], expires_in: expires_in(Time.at(resp.item['expire_time'])))
+      signer.presigned_url(:get_object, bucket: "#{ENV['SHARE_LINK_S3_BUCKET']}", key: resp.item['bucket_object_key'], expires_in: expires_in(Time.at(resp.item['expire_time'])))
     end
   end
 
@@ -61,7 +56,7 @@ class ShareLinkService
   end
 
   def generate_url_by_hex(hex)
-    "#{URL_HOST[Rails.env]}/share_links/#{hex}"
+    "#{ENV['API_HOST']}/share_links/#{hex}"
   end
 
   def expires_in(expire_time)

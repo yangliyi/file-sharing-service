@@ -9,6 +9,7 @@ RSpec.describe ShareLinkService do
     let(:expire_time) { 86400 }
 
     it 'updates to dynamodb and returns share link url' do
+      stub_const('ENV', ENV.to_hash.merge('API_HOST' => 'htttp://mock_host.com'))
       uplaoded_file.stub(:file).and_return(file)
       file.stub(:key).and_return(mock_bucket_key)
       allow(SecureRandom).to receive(:hex).and_return(mock_hex)
@@ -24,7 +25,7 @@ RSpec.describe ShareLinkService do
       })
 
       result = ShareLinkService.new.generate_url(uplaoded_file, expire_time: expire_time)
-      expect(result).to eq("#{ShareLinkService::URL_HOST[Rails.env]}/share_links/#{mock_hex}")
+      expect(result).to eq("#{ENV['API_HOST']}/share_links/#{mock_hex}")
     end
 
     it 'raises error when share link hex exists' do
@@ -55,8 +56,10 @@ RSpec.describe ShareLinkService do
         'bucket_object_key' => mock_bucket_key
       }
     end
+    let(:test_bucket) { 'file-sharing-service-test' }
     let(:dynamodb_response) { double('dynamodb_response') }
     it 'returns presigned url from s3' do
+      stub_const('ENV', ENV.to_hash.merge('SHARE_LINK_S3_BUCKET' => test_bucket))
       dynamodb_response.stub(:item).and_return(dynamodb_item)
       allow_any_instance_of(Aws::DynamoDB::Client).to receive(:get_item).and_return(dynamodb_response)
       expect_any_instance_of(Aws::DynamoDB::Client).to receive(:get_item).with({
@@ -67,7 +70,7 @@ RSpec.describe ShareLinkService do
       })
 
       allow_any_instance_of(Aws::S3::Presigner).to receive(:presigned_url).and_return('mock_presigned_url')
-      expect_any_instance_of(Aws::S3::Presigner).to receive(:presigned_url).with(:get_object, { bucket: 'file-sharing-service-test', expires_in: 600, key: mock_bucket_key })
+      expect_any_instance_of(Aws::S3::Presigner).to receive(:presigned_url).with(:get_object, { bucket: test_bucket, expires_in: 600, key: mock_bucket_key })
 
       result = ShareLinkService.new.get_presigned_url(mock_hex)
       expect(result).to eq('mock_presigned_url')

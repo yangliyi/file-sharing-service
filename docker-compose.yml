@@ -18,6 +18,8 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       RAILS_LOG_TO_STDOUT: 'true'
+      SHARE_LINK_S3_BUCKET: ${SHARE_LINK_S3_BUCKET}
+      API_HOST: ${API_HOST}
   db:
     image: postgres
     volumes:
