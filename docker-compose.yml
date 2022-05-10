@@ -17,13 +17,15 @@ services:
       TEST_DATABASE_URL: postgresql://postgres@db/api_test
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      RAILS_LOG_TO_STDOUT: 'true'
   db:
-    image: postgres:latest
+    image: postgres
     volumes:
-      - ./docker/data-volume/postgresql:/var/lib/postgresql/data
+      - postgres_cache:/var/lib/postgresql/data
     ports:
       - 5456:5432
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
 volumes:
   bundle_cache:
+  postgres_cache:
